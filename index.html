@@ -240,7 +240,7 @@ details.key .key-in { display: grid; gap: 8px; margin-top: 10px; }
 (function () {
   "use strict";
 
-  // Clave de la API de PageSpeed Insights limitada a jrebate.github.io (restricción por referer en Google Cloud).
+  // Clave de la API de PageSpeed Insights: la mete la Action de Pages desde el secreto PSI_KEY. Está limitada a jrebate.github.io en Google Cloud.
   var PSI_KEY = "";
   var KEY_STORE = "revisor-web-clave";
   var PSI = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";

@@ -1,0 +1,41 @@
+# Publica la web en GitHub Pages metiendo la clave de PageSpeed Insights desde el secreto PSI_KEY.
+# La clave no se guarda en el repositorio, pero sí aparece en la página publicada, porque la usa el navegador.
+# Por eso la clave debe estar restringida en Google Cloud a https://jrebate.github.io/* y solo a la API de PageSpeed Insights.
+name: Publicar en GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar la web con la clave
+        env:
+          PSI_KEY: ${{ secrets.PSI_KEY }}
+        run: |
+          if [ -z "$PSI_KEY" ]; then echo "::error::Falta el secreto PSI_KEY (Settings > Secrets and variables > Actions)"; exit 1; fi
+          mkdir _site
+          cp -r index.html centaurux-base.css assets _site/
+          python3 .github/meter_clave.py _site/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4
