@@ -108,6 +108,9 @@ details.key .key-in { display: grid; gap: 8px; margin-top: 10px; }
 .pasos li.ahora .ico { border: 2px solid var(--cz-fg); }
 .pasos li.ahora .ico::after { content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--cz-fg); animation: cz-blink 1.2s ease-in-out infinite; }
 .cz-marker.nowrap { white-space: nowrap; }
+.cz-btn:disabled, .cz-btn:disabled:hover { background: var(--cz-muted); color: var(--cz-muted-fg); border-color: transparent; cursor: not-allowed; }
+.cz-btn:disabled .cz-arrow { display: none; }
+input[readonly]:not(.share-out) { color: var(--cz-muted-fg); cursor: not-allowed; }
 details.key ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
 .key-ok { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: .9rem; }
 .thanks { font-size: .92rem; border-left: 3px solid var(--cz-fg); padding: 6px 12px; }
@@ -551,7 +554,8 @@ details.key ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
 
   function analyze(url) {
     if (state.running) return;
-    state.running = true; $("go").disabled = true; $("go").firstChild.nodeValue = "Revisando… ";
+    state.running = true; $("go").disabled = true; $("go").firstChild.nodeValue = "Revisando… "; $("url").readOnly = true;
+    document.querySelectorAll("[data-ex]").forEach(function (b) { b.disabled = true; });
     $("err").hidden = true; $("ficha").hidden = true; $("shareOut").hidden = true; $("accStatus").textContent = ""; $("proMiniThanks").hidden = true;
     state.url = url; state.llamar = null; state.field = null;
     track("web-revisar", "Revisar web");
@@ -594,7 +598,8 @@ details.key ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
       stopSteps(); setStatus("");
       track("web-error-red", "Error: red o tiempo agotado");
       showError("<p><strong>La revisión ha tardado demasiado o se ha cortado la conexión.</strong> Vuelve a probar; algunas webs muy pesadas tardan más de dos minutos.</p>");
-    }).then(function () { state.running = false; $("go").disabled = false; $("go").firstChild.nodeValue = "Revisar web "; });
+    }).then(function () { state.running = false; $("go").disabled = false; $("go").firstChild.nodeValue = "Revisar web "; $("url").readOnly = false;
+      document.querySelectorAll("[data-ex]").forEach(function (b) { b.disabled = false; }); });
   }
 
   $("form").addEventListener("submit", function (e) {
