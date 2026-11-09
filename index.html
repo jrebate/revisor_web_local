@@ -108,6 +108,9 @@ details.key .key-in { display: grid; gap: 8px; margin-top: 10px; }
 .pasos li.ahora .ico { border: 2px solid var(--cz-fg); }
 .pasos li.ahora .ico::after { content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--cz-fg); animation: cz-blink 1.2s ease-in-out infinite; }
 .cz-marker.nowrap { white-space: nowrap; }
+.cz-btn:disabled, .cz-btn:disabled:hover { background: var(--cz-muted); color: var(--cz-muted-fg); border-color: transparent; cursor: not-allowed; }
+.cz-btn:disabled .cz-arrow { display: none; }
+input[readonly]:not(.share-out) { color: var(--cz-muted-fg); cursor: not-allowed; }
 details.key ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
 .key-ok { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: .9rem; }
 .thanks { font-size: .92rem; border-left: 3px solid var(--cz-fg); padding: 6px 12px; }
@@ -132,14 +135,51 @@ details.key ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
 @media (max-width: 560px) { .cz-header__tag { display: none; } }
 
 /* ---------- Impresión: solo la ficha ---------- */
+.print-only { display: none; }
 @media print {
-  @page { margin: 14mm; }
-  body::before, .cz-header, .hero, #formPanel, #cargando, .acciones, .pro, .como, .notes, .cz-footer, .skip { display: none !important; }
-  main.cz-wrap { padding: 0; gap: 0; max-width: none; }
-  .bloque, .phone { break-inside: avoid; }
-  .ficha-grid { grid-template-columns: 180px minmax(0, 1fr); }
-  .manual { display: none; }
+  /* Margen 0 para que el navegador no añada fecha ni URL; el margen lo pone la propia hoja */
+  @page { size: A4; margin: 0; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { background: var(--cz-card); font-size: 9.5pt; line-height: 1.4; }
+  body::before, .cz-header, .hero, #formPanel, #cargando, .acciones, .pro, .como, .notes, .cz-footer, .skip, .ficha-legal, .screen-only, .manual { display: none !important; }
+  .print-only { display: block; }
+  main.cz-wrap { padding: 10mm 12mm 0; gap: 0; max-width: none; }
+  .metricas { margin-bottom: 1.5mm; }
+  .ficha, .ficha-head, .ficha-grid, .ficha-grid > div, .bloques, .resumen { display: block !important; }
+  .ficha > * + * { margin-top: 5mm; }
+
+  .print-head { display: flex; justify-content: space-between; align-items: center; gap: 8mm; padding-bottom: 5mm; border-bottom: 2px solid var(--cz-fg); }
+  .ph-brand { display: flex; align-items: center; gap: 4mm; }
+  .ph-brand img { width: 19mm; height: auto; }
+  .ph-brand span { font-family: var(--cz-font-display); font-weight: 700; font-stretch: 90%; font-size: 34pt; letter-spacing: -0.02em; line-height: 1; }
+  .ph-side { display: grid; gap: 1.5mm; text-align: right; font-size: 9pt; color: var(--cz-muted-fg); }
+  .ph-side b { color: var(--cz-fg); font-weight: 600; }
+
+  .ficha-head > * + * { margin-top: 1mm; }
+  .print-domain { font-family: var(--cz-font-display); font-weight: 800; font-stretch: 88%; font-size: 26pt; line-height: 1; letter-spacing: -0.02em; overflow-wrap: anywhere; margin-top: 1mm; }
+  .ficha-head .url { font-size: 8pt; color: var(--cz-muted-fg); }
+  .ficha-head .hint { font-size: 8.5pt; }
+
+  .ficha-grid::after { content: ""; display: block; clear: both; }
+  .phone { float: left; width: 44mm; margin: 0 6mm 3mm 0 !important; border-radius: 14px; padding: 6px 5px; break-inside: avoid; }
+  .phone figcaption { font-size: 7.5pt; }
+  .resumen { padding-block: 3mm; margin-bottom: 3mm; overflow: hidden; }
+  .resumen > * + * { margin-top: 1.5mm; }
+  .resumen .cz-display-md { font-size: 15pt; }
+  .bloque + .bloque { margin-top: 2.5mm; }
+  .bloque { display: block; overflow: hidden; padding: 2.5mm 4mm; background: transparent; break-inside: avoid; }
+  .bloque > * + * { margin-top: 1.2mm; }
+  .bloque h3 { font-size: 11.5pt; }
+  .verdict { font-size: 7pt; }
+  .bloque ul { gap: 1mm; }
+  .bloque .tip { font-size: 8.5pt; }
+  .metricas { gap: 1mm 6mm; }
+  .metricas .n { font-size: 11pt; }
+  .metricas small { font-size: 7.5pt; }
+
+  .print-foot { display: flex; break-inside: avoid; gap: 2.5mm; align-items: center; font-size: 7.5pt; color: var(--cz-muted-fg); border-top: 1px solid var(--cz-rule); padding-top: 2.5mm; }
+  .print-foot b { color: var(--cz-fg); font-weight: 600; }
+  .print-foot img { width: 5mm; height: auto; flex: none; }
 }
 </style>
 </head>
@@ -211,8 +251,13 @@ details.key ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
   </section>
 
   <section class="ficha" id="ficha" aria-labelledby="fichaTitle" hidden tabindex="-1">
+    <div class="print-only print-head" aria-hidden="true">
+      <div class="ph-brand"><img src="assets/centaurux-iso-negro.png" alt="" width="64" height="58"><span>CentaurUX</span></div>
+      <div class="ph-side"><span class="cz-label">Revisor de web local</span><span>Haz tu ficha gratis en<br><b>jrebate.github.io/revisor_web_local</b></span></div>
+    </div>
     <div class="ficha-head">
       <h2 id="fichaTitle" class="cz-section-title">Ficha de la web</h2>
+      <p class="print-only print-domain" id="fDomain" aria-hidden="true"></p>
       <p class="url" id="fUrl"></p>
       <p class="hint" id="fFecha"></p>
     </div>
@@ -223,6 +268,7 @@ details.key ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
         <div class="bloques" id="fBloques"></div>
       </div>
     </div>
+    <div class="print-only print-foot" aria-hidden="true"><img src="assets/centaurux-iso-negro.png" alt="" width="18" height="16"><span><b>Hecho con el Revisor de web local de CentaurUX</b> · jrebate.github.io/revisor_web_local · Ficha orientativa con datos de Google PageSpeed Insights: no es una auditoría completa ni certifica nada.</span></div>
     <p class="ficha-legal">Ficha orientativa hecha con Google PageSpeed Insights (Lighthouse) en un móvil simulado con conexión lenta. No es una auditoría completa ni certifica nada, y los resultados pueden cambiar de una revisión a otra. Hecha con el Revisor de web local de CentaurUX.</p>
 
     <div class="acciones">
@@ -488,7 +534,7 @@ details.key ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
     var ans = r && r.manual;
     v = ans === "si" ? "bien" : ans === "no" ? "revisar" : "pendiente";
     var q = ans ? (ans === "si" ? "<ul><li>Has visto un botón o enlace para llamar en la captura.</li></ul>" : "<ul><li>No se ve un botón para llamar en la primera pantalla del móvil.</li></ul><p class=\"tip\">Un botón de llamar a la vista suele ser lo primero que busca quien entra desde el móvil.</p>") :
-      "<p>Esta web no deja que la leamos desde tu navegador, así que necesitamos tu vistazo. Mira la captura: ¿se ve un botón o enlace para llamar o escribir por WhatsApp sin bajar?</p>";
+      "<p class=\"screen-only\">Esta web no deja que la leamos desde tu navegador, así que necesitamos tu vistazo. Mira la captura: ¿se ve un botón o enlace para llamar o escribir por WhatsApp sin bajar?</p><p class=\"print-only\">Sin comprobar: no hemos podido leer la página. Mira en la captura si hay un botón de llamar a la vista.</p>";
     body = q + '<div class="manual" role="group" aria-label="¿Se ve un botón de llamar?"><button type="button" class="cz-btn cz-btn--outline" data-call="si" aria-pressed="' + (ans === "si") + '">Sí, se ve</button><button type="button" class="cz-btn cz-btn--outline" data-call="no" aria-pressed="' + (ans === "no") + '">No lo veo</button></div>';
     return { v: v, html: bloqueHtml("llamar", "Botón de llamar", v, body), first: v === "revisar" ? "No se ve un botón para llamar en la primera pantalla." : "" };
   }
@@ -551,7 +597,8 @@ details.key ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
 
   function analyze(url) {
     if (state.running) return;
-    state.running = true; $("go").disabled = true; $("go").firstChild.nodeValue = "Revisando… ";
+    state.running = true; $("go").disabled = true; $("go").firstChild.nodeValue = "Revisando… "; $("url").readOnly = true;
+    document.querySelectorAll("[data-ex]").forEach(function (b) { b.disabled = true; });
     $("err").hidden = true; $("ficha").hidden = true; $("shareOut").hidden = true; $("accStatus").textContent = ""; $("proMiniThanks").hidden = true;
     state.url = url; state.llamar = null; state.field = null;
     track("web-revisar", "Revisar web");
@@ -567,6 +614,8 @@ details.key ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
           stopSteps(); setStatus("");
           var finalUrl = state.lh.finalDisplayedUrl || state.lh.finalUrl || url;
           $("fUrl").textContent = finalUrl;
+          try { state.host = new URL(finalUrl).hostname.replace(/^www\./, ""); } catch (e) { state.host = finalUrl; }
+          $("fDomain").textContent = state.host;
           $("fFecha").textContent = "Revisada el " + new Date().toLocaleString("es-ES", { dateStyle: "long", timeStyle: "short" }) + " · Vista de móvil";
           renderShot(); render();
           $("ficha").hidden = false; $("ficha").focus({ preventScroll: true }); $("ficha").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -594,7 +643,8 @@ details.key ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
       stopSteps(); setStatus("");
       track("web-error-red", "Error: red o tiempo agotado");
       showError("<p><strong>La revisión ha tardado demasiado o se ha cortado la conexión.</strong> Vuelve a probar; algunas webs muy pesadas tardan más de dos minutos.</p>");
-    }).then(function () { state.running = false; $("go").disabled = false; $("go").firstChild.nodeValue = "Revisar web "; });
+    }).then(function () { state.running = false; $("go").disabled = false; $("go").firstChild.nodeValue = "Revisar web "; $("url").readOnly = false;
+      document.querySelectorAll("[data-ex]").forEach(function (b) { b.disabled = false; }); });
   }
 
   $("form").addEventListener("submit", function (e) {
@@ -613,8 +663,13 @@ details.key ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
     function fallback() { out.hidden = false; out.focus(); out.select(); st.textContent = "Tu navegador no nos deja copiar: selecciona el texto de la caja y cópialo tú."; }
     try { navigator.clipboard.writeText(text).then(function () { st.textContent = "✓ " + okMsg; }, fallback); } catch (e) { fallback(); }
   }
-  window.addEventListener("beforeprint", function () { document.documentElement.classList.add("cz-solo-claro"); });
-  window.addEventListener("afterprint", function () { document.documentElement.classList.remove("cz-solo-claro"); });
+  // Al imprimir: tema claro siempre y título del documento como nombre del PDF
+  var baseTitle = document.title;
+  window.addEventListener("beforeprint", function () {
+    document.documentElement.classList.add("cz-solo-claro");
+    if (state.host) document.title = "Ficha web " + state.host + " " + new Date().toISOString().slice(0, 10) + " - CentaurUX";
+  });
+  window.addEventListener("afterprint", function () { document.documentElement.classList.remove("cz-solo-claro"); document.title = baseTitle; });
   $("print").addEventListener("click", function () { track("web-imprimir", "Imprimir o guardar en PDF"); window.print(); });
   $("copy").addEventListener("click", function () {
     track("web-copiar-resumen", "Copiar resumen");
