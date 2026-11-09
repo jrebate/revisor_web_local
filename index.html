@@ -498,7 +498,7 @@ details.key .key-in { display: grid; gap: 8px; margin-top: 10px; }
         showError("<p><strong>Hoy se han agotado las revisiones gratuitas.</strong> Vuelve a probar más tarde o usa tu propia clave de Google (es gratis), en la opción de arriba.</p>");
       } else if (res.status === 403 || /API key/i.test(msg)) {
         track("web-error-clave", "Error: clave");
-        showError("<p><strong>Google no ha aceptado la clave de la API.</strong> Si has puesto una tuya, revisa que esté bien copiada y que tenga activada la API de PageSpeed Insights.</p>");
+        showError("<p><strong>Google no ha aceptado la clave de la API.</strong> Si has puesto una tuya, revisa que esté bien copiada y que tenga activada la API de PageSpeed Insights.</p>" + (msg ? '<p class="hint">Detalle de Google: ' + esc(msg.slice(0, 220)) + "</p>" : ""));
       } else if (/FAILED_DOCUMENT_REQUEST|ERRORED_DOCUMENT_REQUEST|DNS|NO_FCP|unable to reliably load|NOT_HTML/i.test(msg)) {
         track("web-error-carga", "Error: no se pudo cargar la web");
         showError("<p><strong>Google no ha podido abrir esa web.</strong> Comprueba que la dirección está bien escrita y que la página se abre en tu navegador. Algunas webs bloquean las visitas automáticas.</p>");
