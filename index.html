@@ -75,8 +75,41 @@ details.key .key-in { display: grid; gap: 8px; margin-top: 10px; }
 .manual { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .manual .cz-btn[aria-pressed="true"] { background: var(--cz-primary); color: var(--cz-on-primary); border-color: var(--cz-primary); }
 
-.acciones { display: grid; gap: 12px; }
-.acciones .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.acciones { display: grid; gap: 18px; }
+.acc-main { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; }
+.acc-main .cz-btn { padding: 0.7rem 1.2rem; font-size: .9rem; }
+.linkbtn.acc { font-weight: 500; font-size: .95rem; display: inline-flex; gap: 6px; align-items: center; }
+.linkbtn.acc svg { flex: none; }
+.acc-status { font-size: .92rem; min-height: 0; }
+.acc-status:empty { display: none; }
+.pro-teaser { border: 1px dashed var(--cz-input); border-radius: var(--cz-radius); padding: 16px 18px; display: grid; gap: 12px; }
+.pro-teaser .cz-label { display: flex; gap: 8px; align-items: center; }
+.teaser-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 10px; }
+.teaser-opt { text-align: left; font: inherit; color: var(--cz-fg); background: var(--cz-card); border: 1px solid var(--cz-rule); border-radius: var(--cz-radius); padding: 12px 14px; cursor: pointer; display: grid; gap: 4px; }
+.teaser-opt:hover { border-color: var(--cz-fg); }
+.teaser-opt .t { font-weight: 600; }
+.teaser-opt .m { font-size: .85rem; color: var(--cz-muted-fg); }
+.teaser-opt[aria-pressed="true"] { border-color: var(--cz-fg); }
+.teaser-opt[aria-pressed="true"] .m { color: var(--cz-fg); }
+
+/* ---------- Cargando ---------- */
+.cargando { gap: 16px; }
+.carg-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; }
+.carg-head .url { font-family: var(--cz-font-mono); font-size: .9rem; overflow-wrap: anywhere; color: var(--cz-muted-fg); }
+.carg-time { font-family: var(--cz-font-mono); font-variant-numeric: tabular-nums; font-size: 1.1rem; }
+.barra { height: 10px; border-radius: 999px; background: var(--cz-muted); overflow: hidden; }
+.barra span { display: block; height: 100%; width: 3%; background: var(--cz-lime); border-radius: 999px; transition: width 1s linear; }
+.pasos { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.pasos li { display: flex; gap: 12px; align-items: center; color: var(--cz-muted-fg); }
+.pasos .ico { width: 20px; height: 20px; flex: none; border-radius: 999px; border: 2px dashed var(--cz-input); display: grid; place-items: center; font-size: .75rem; line-height: 1; }
+.pasos li.hecho { color: var(--cz-fg); }
+.pasos li.hecho .ico { border: 0; background: var(--cz-fg); color: var(--cz-bg); }
+.pasos li.ahora { color: var(--cz-fg); font-weight: 600; }
+.pasos li.ahora .ico { border: 2px solid var(--cz-fg); }
+.pasos li.ahora .ico::after { content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--cz-fg); animation: cz-blink 1.2s ease-in-out infinite; }
+.cz-marker.nowrap { white-space: nowrap; }
+details.key ol { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+.key-ok { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: .9rem; }
 .thanks { font-size: .92rem; border-left: 3px solid var(--cz-fg); padding: 6px 12px; }
 .share-out { width: 100%; }
 .ficha-legal { font-size: .82rem; color: var(--cz-muted-fg); }
@@ -101,7 +134,7 @@ details.key .key-in { display: grid; gap: 8px; margin-top: 10px; }
 /* ---------- Impresión: solo la ficha ---------- */
 @media print {
   @page { margin: 14mm; }
-  body::before, .cz-header, .hero, #formPanel, .acciones, .pro, .como, .notes, .cz-footer, .skip { display: none !important; }
+  body::before, .cz-header, .hero, #formPanel, #cargando, .acciones, .pro, .como, .notes, .cz-footer, .skip { display: none !important; }
   main.cz-wrap { padding: 0; gap: 0; max-width: none; }
   .bloque, .phone { break-inside: avoid; }
   .ficha-grid { grid-template-columns: 180px minmax(0, 1fr); }
@@ -123,7 +156,7 @@ details.key .key-in { display: grid; gap: 8px; margin-top: 10px; }
 <main class="cz-wrap">
   <section class="hero" aria-labelledby="h1">
     <p class="cz-label">Herramienta gratuita · Revisor de web local</p>
-    <h1 class="cz-display-xl" id="h1">La web de un negocio local, <span class="cz-marker">revisada en un minuto</span></h1>
+    <h1 class="cz-display-xl" id="h1">La web de un negocio local, revisada en <span class="cz-marker nowrap">un minuto</span></h1>
     <p class="cz-lead">Pega la web de un bar, una clínica o un taller. Te damos una ficha de una página con lo que más le importa a quien la abre desde el móvil: si se ve bien, cuánto tarda, si se puede llamar con un toque y si se lee sin esfuerzo. Ideal para enseñársela al negocio o preparar una propuesta.</p>
   </section>
 
@@ -136,20 +169,45 @@ details.key .key-in { display: grid; gap: 8px; margin-top: 10px; }
           <input type="url" id="url" name="url" inputmode="url" autocomplete="url" placeholder="https://www.ejemplo.es" aria-describedby="urlHint" required>
           <button type="submit" class="cz-btn" id="go">Revisar web <span class="cz-arrow" aria-hidden="true">→</span></button>
         </div>
-        <p class="hint" id="urlHint">Solo webs públicas. Tarda entre 20 y 60 segundos, porque Google abre la página en un móvil simulado.</p>
+        <p class="hint" id="urlHint">Solo webs públicas. Google abre la página en un móvil simulado con conexión lenta, así que tarda entre 20 y 60 segundos.</p>
       </div>
     </form>
     <div class="examples"><span>¿Sin web a mano? Prueba con</span><button type="button" class="cz-btn cz-btn--outline" data-ex="https://www.wikipedia.org/">wikipedia.org</button></div>
     <details class="key" id="keyBox">
-      <summary>¿Te sale que se ha llegado al límite? Usa tu propia clave de Google</summary>
+      <summary>¿Vas a revisar muchas webs? Usa tu propia clave de Google, es gratis</summary>
       <div class="key-in">
-        <p class="hint">Si revisas muchas webs, puedes crear una clave gratuita de la API de PageSpeed Insights en Google Cloud y pegarla aquí. Se guarda solo en este navegador.</p>
-        <label class="lbl" for="key">Tu clave de la API (opcional)</label>
-        <input type="text" id="key" autocomplete="off" spellcheck="false" placeholder="AIza…">
+        <p class="hint">Las revisiones salen de una cuota diaria de Google que compartimos entre todas las personas que usan esta página. Si un día se agota, o vas a revisar muchas webs seguidas, puedes usar tu propia clave. Es gratuita y se crea en unos 3 minutos:</p>
+        <ol class="hint">
+          <li>Entra en la <a href="https://developers.google.com/speed/docs/insights/v5/get-started" target="_blank" rel="noopener" data-track="web-clave-guia">guía de PageSpeed Insights</a> y pulsa "Get a Key".</li>
+          <li>Copia la clave que te da Google y pégala aquí debajo.</li>
+        </ol>
+        <label class="lbl" for="key">Tu clave de Google (opcional)</label>
+        <input type="text" id="key" autocomplete="off" spellcheck="false" placeholder="Empieza por AIza…" aria-describedby="keyNote">
+        <p class="hint" id="keyNote">Se queda guardada solo en este navegador. No la vemos ni la guardamos en ningún servidor: solo viaja a Google con cada revisión.</p>
+        <div class="key-ok" id="keyOk" hidden><span>Clave guardada. Tus revisiones usarán tu propia cuota.</span><button type="button" class="linkbtn" id="keyDel">Borrar mi clave</button></div>
       </div>
     </details>
     <div class="status" id="status" role="status" aria-live="polite"></div>
     <div class="err" id="err" role="alert" hidden></div>
+  </section>
+
+  <section class="panel cargando" id="cargando" aria-labelledby="cargTitle" hidden>
+    <div class="carg-head">
+      <div style="display:grid;gap:4px;min-width:0">
+        <h2 id="cargTitle" class="cz-display-md">Revisando la web</h2>
+        <p class="url" id="cargUrl"></p>
+      </div>
+      <span class="carg-time" id="cargTime" aria-hidden="true">0 s</span>
+    </div>
+    <div class="barra" aria-hidden="true"><span id="cargBar"></span></div>
+    <ol class="pasos" id="pasos">
+      <li><span class="ico" aria-hidden="true"></span><span>Google abre la web en un móvil simulado</span></li>
+      <li><span class="ico" aria-hidden="true"></span><span>Mide cuánto tarda en cargar</span></li>
+      <li><span class="ico" aria-hidden="true"></span><span>Comprueba el texto, los botones y el teléfono</span></li>
+      <li><span class="ico" aria-hidden="true"></span><span>Preparamos tu ficha</span></li>
+    </ol>
+    <p class="sr" id="cargLive" role="status" aria-live="polite"></p>
+    <p class="hint">Suele tardar entre 20 y 60 segundos. Puedes ir a otra pestaña: la ficha aparecerá aquí cuando esté lista.</p>
   </section>
 
   <section class="ficha" id="ficha" aria-labelledby="fichaTitle" hidden tabindex="-1">
@@ -168,17 +226,22 @@ details.key .key-in { display: grid; gap: 8px; margin-top: 10px; }
     <p class="ficha-legal">Ficha orientativa hecha con Google PageSpeed Insights (Lighthouse) en un móvil simulado con conexión lenta. No es una auditoría completa ni certifica nada, y los resultados pueden cambiar de una revisión a otra. Hecha con el Revisor de web local de CentaurUX.</p>
 
     <div class="acciones">
-      <div class="row">
-        <button type="button" class="cz-btn" id="print">Imprimir o guardar en PDF</button>
-        <button type="button" class="cz-btn cz-btn--outline" id="copy">Copiar resumen para enviar</button>
-        <button type="button" class="cz-btn cz-btn--outline" id="share">Copiar enlace a esta revisión</button>
+      <div class="acc-main">
+        <button type="button" class="cz-btn" id="print">Guardar en PDF <span class="cz-arrow" aria-hidden="true">→</span></button>
+        <button type="button" class="linkbtn acc" id="copy"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" fill="none" stroke="currentColor" stroke-width="2"/></svg>Copiar resumen en texto</button>
+        <button type="button" class="linkbtn acc" id="share"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Copiar enlace</button>
       </div>
+      <p class="acc-status" id="accStatus" role="status" aria-live="polite"></p>
       <input class="share-out" id="shareOut" type="text" readonly aria-label="Enlace o resumen para copiar" hidden>
-      <div class="row">
-        <button type="button" class="cz-btn cz-btn--outline" id="proLogo">PDF con tu logo · Pro</button>
-        <button type="button" class="cz-btn cz-btn--outline" id="proVarias">Revisar varias webs a la vez · Pro</button>
-      </div>
-      <div class="thanks" id="proMiniThanks" hidden role="status">Todavía no está disponible. Gracias por pulsar: nos ayuda a decidir si lo construimos. Abajo te contamos qué traerá.</div>
+      <aside class="pro-teaser" aria-labelledby="teaserTitle">
+        <p class="cz-label"><span class="cz-dot cz-dot--violet" aria-hidden="true"></span>Próximamente en el Pro</p>
+        <p id="teaserTitle"><strong>¿Preparas fichas para tus clientes?</strong> Estamos pensando en dos mejoras. Dinos cuál te ahorraría más tiempo:</p>
+        <div class="teaser-opts">
+          <button type="button" class="teaser-opt" id="proLogo" aria-pressed="false"><span class="t">El PDF con tu logo y tu contacto</span><span class="m">Me interesa →</span></button>
+          <button type="button" class="teaser-opt" id="proVarias" aria-pressed="false"><span class="t">Revisar varias webs de golpe y compararlas</span><span class="m">Me interesa →</span></button>
+        </div>
+        <div class="thanks" id="proMiniThanks" hidden role="status">Apuntado, gracias. Todavía no existe: cada clic nos ayuda a decidir qué construir primero.</div>
+      </aside>
     </div>
   </section>
 
@@ -269,23 +332,44 @@ details.key .key-in { display: grid; gap: 8px; margin-top: 10px; }
   // ---------- Clave propia ----------
   var keyIn = $("key");
   try { keyIn.value = localStorage.getItem(KEY_STORE) || ""; } catch (e) {}
+  function keyState() { $("keyOk").hidden = !keyIn.value.trim(); }
   keyIn.addEventListener("change", function () {
     var v = keyIn.value.trim();
     try { if (v) localStorage.setItem(KEY_STORE, v); else localStorage.removeItem(KEY_STORE); } catch (e) {}
     if (v) track("web-clave-propia", "Usa su propia clave");
+    keyState();
   });
+  $("keyDel").addEventListener("click", function () {
+    keyIn.value = ""; try { localStorage.removeItem(KEY_STORE); } catch (e) {}
+    keyState(); keyIn.focus();
+  });
+  keyState();
 
   // ---------- Progreso ----------
-  var STEPS = ["Google está abriendo la web en un móvil simulado…", "Midiendo cuánto tarda en cargar…", "Comprobando tamaños de texto y botones…", "Preparando la ficha…"];
-  var stepTimer = null;
-  function setStatus(text, busy) {
-    $("status").innerHTML = text ? (busy ? '<span class="cz-dot cz-dot--pulse" aria-hidden="true"></span>' : "") + "<span>" + esc(text) + "</span>" : "";
+  // Pasos orientativos: la API no informa del progreso, así que avanzan por tiempo y la barra se frena antes del final.
+  var STEP_AT = [0, 7, 16, 28];
+  var stepTimer = null, stepIdx = -1;
+  function setStatus(text) { $("status").textContent = text || ""; }
+  function paintSteps(t) {
+    var idx = 0; STEP_AT.forEach(function (s, i) { if (t >= s) idx = i; });
+    var lis = $("pasos").children;
+    for (var i = 0; i < lis.length; i++) {
+      lis[i].className = i < idx ? "hecho" : i === idx ? "ahora" : "";
+      lis[i].querySelector(".ico").textContent = i < idx ? "✓" : "";
+    }
+    if (idx !== stepIdx) { stepIdx = idx; $("cargLive").textContent = lis[idx].textContent + "…"; }
+    $("cargTime").textContent = t + " s";
+    $("cargBar").style.width = Math.min(94, 3 + 91 * (1 - Math.exp(-t / 22))).toFixed(1) + "%";
   }
-  function startSteps() {
-    var i = 0; setStatus(STEPS[0], true);
-    stepTimer = setInterval(function () { i = Math.min(i + 1, STEPS.length - 1); setStatus(STEPS[i], true); }, 9000);
+  function startSteps(url) {
+    var t0 = Date.now(); stepIdx = -1;
+    $("cargUrl").textContent = url;
+    $("cargando").hidden = false;
+    $("cargando").scrollIntoView({ behavior: "smooth", block: "center" });
+    paintSteps(0);
+    stepTimer = setInterval(function () { paintSteps(Math.round((Date.now() - t0) / 1000)); }, 1000);
   }
-  function stopSteps() { clearInterval(stepTimer); stepTimer = null; }
+  function stopSteps() { clearInterval(stepTimer); stepTimer = null; $("cargBar").style.width = "100%"; $("cargando").hidden = true; }
 
   function showError(html) { var e = $("err"); e.innerHTML = html; e.hidden = false; }
 
@@ -467,11 +551,11 @@ details.key .key-in { display: grid; gap: 8px; margin-top: 10px; }
 
   function analyze(url) {
     if (state.running) return;
-    state.running = true; $("go").disabled = true;
-    $("err").hidden = true; $("ficha").hidden = true; $("shareOut").hidden = true; $("proMiniThanks").hidden = true;
+    state.running = true; $("go").disabled = true; $("go").firstChild.nodeValue = "Revisando… ";
+    $("err").hidden = true; $("ficha").hidden = true; $("shareOut").hidden = true; $("accStatus").textContent = ""; $("proMiniThanks").hidden = true;
     state.url = url; state.llamar = null; state.field = null;
     track("web-revisar", "Revisar web");
-    startSteps();
+    startSteps(url);
     var htmlP = tryReadHtml(url);
     runPsi(url).then(function (res) {
       if (res.status === 200 && res.json.lighthouseResult) {
@@ -495,7 +579,7 @@ details.key .key-in { display: grid; gap: 8px; margin-top: 10px; }
       if (res.status === 429) {
         track("web-error-cuota", "Error: cuota agotada");
         $("keyBox").open = true;
-        showError("<p><strong>Hoy se han agotado las revisiones gratuitas.</strong> Vuelve a probar más tarde o usa tu propia clave de Google (es gratis), en la opción de arriba.</p>");
+        showError("<p><strong>Por hoy se han agotado las revisiones gratuitas que compartimos.</strong> Puedes volver mañana o, si tienes prisa, usar tu propia clave de Google: es gratis y te explicamos cómo justo encima de este aviso.</p>");
       } else if (res.status === 403 || /API key/i.test(msg)) {
         track("web-error-clave", "Error: clave");
         showError("<p><strong>Google no ha aceptado la clave de la API.</strong> Si has puesto una tuya, revisa que esté bien copiada y que tenga activada la API de PageSpeed Insights.</p>" + (msg ? '<p class="hint">Detalle de Google: ' + esc(msg.slice(0, 220)) + "</p>" : ""));
@@ -510,7 +594,7 @@ details.key .key-in { display: grid; gap: 8px; margin-top: 10px; }
       stopSteps(); setStatus("");
       track("web-error-red", "Error: red o tiempo agotado");
       showError("<p><strong>La revisión ha tardado demasiado o se ha cortado la conexión.</strong> Vuelve a probar; algunas webs muy pesadas tardan más de dos minutos.</p>");
-    }).then(function () { state.running = false; $("go").disabled = false; });
+    }).then(function () { state.running = false; $("go").disabled = false; $("go").firstChild.nodeValue = "Revisar web "; });
   }
 
   $("form").addEventListener("submit", function (e) {
@@ -525,9 +609,9 @@ details.key .key-in { display: grid; gap: 8px; margin-top: 10px; }
 
   // ---------- Acciones de la ficha ----------
   function copyText(text, okMsg) {
-    var out = $("shareOut"); out.value = text; out.hidden = false;
-    function fallback() { out.focus(); out.select(); setStatus("Selecciona y copia el texto de la caja."); }
-    try { navigator.clipboard.writeText(text).then(function () { setStatus(okMsg); }, fallback); } catch (e) { fallback(); }
+    var out = $("shareOut"), st = $("accStatus"); out.value = text; out.hidden = true;
+    function fallback() { out.hidden = false; out.focus(); out.select(); st.textContent = "Tu navegador no nos deja copiar: selecciona el texto de la caja y cópialo tú."; }
+    try { navigator.clipboard.writeText(text).then(function () { st.textContent = "✓ " + okMsg; }, fallback); } catch (e) { fallback(); }
   }
   window.addEventListener("beforeprint", function () { document.documentElement.classList.add("cz-solo-claro"); });
   window.addEventListener("afterprint", function () { document.documentElement.classList.remove("cz-solo-claro"); });
@@ -543,14 +627,22 @@ details.key .key-in { display: grid; gap: 8px; margin-top: 10px; }
       b.querySelectorAll("li").forEach(function (li) { lines.push("  - " + li.textContent); });
     });
     lines.push("", "Hecho con el Revisor de web local de CentaurUX (datos orientativos de Google PageSpeed Insights): " + location.href.split("#")[0]);
-    copyText(lines.join("\n"), "Resumen copiado. Pégalo en un correo o un mensaje.");
+    copyText(lines.join("\n"), "Resumen copiado. Pégalo en un correo o un WhatsApp para el negocio.");
   });
   $("share").addEventListener("click", function () {
     track("web-compartir-enlace", "Copiar enlace a la revisión");
-    copyText(location.href.split("#")[0] + "#url=" + encodeURIComponent(state.url), "Enlace copiado. Quien lo abra verá la revisión hecha de nuevo.");
+    copyText(location.href.split("#")[0] + "#url=" + encodeURIComponent(state.url), "Enlace copiado. Al abrirlo, la web se vuelve a revisar en ese momento.");
   });
-  $("proLogo").addEventListener("click", function () { track("web-pro-pdf-logo", "Pro: PDF con tu logo"); $("proMiniThanks").hidden = false; });
-  $("proVarias").addEventListener("click", function () { track("web-pro-varias-webs", "Pro: varias webs a la vez"); $("proMiniThanks").hidden = false; });
+  function teaser(id, ev, title) {
+    $(id).addEventListener("click", function () {
+      if ($(id).getAttribute("aria-pressed") === "true") return;
+      track(ev, title);
+      $(id).setAttribute("aria-pressed", "true"); $(id).querySelector(".m").textContent = "Apuntado ✓";
+      $("proMiniThanks").hidden = false;
+    });
+  }
+  teaser("proLogo", "web-pro-pdf-logo", "Pro: PDF con tu logo");
+  teaser("proVarias", "web-pro-varias-webs", "Pro: varias webs a la vez");
   $("proBtn").addEventListener("click", function () { track("web-pro-me-interesa", "Revisor Pro: me interesa"); $("proThanks").hidden = false; });
 
   document.querySelectorAll("[data-track]").forEach(function (a) {
