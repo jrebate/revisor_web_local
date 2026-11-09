@@ -7,4 +7,8 @@ Pega la URl de cualquier web y obtén una ficha de una página (vista en móvil,
 
 Resultados orientativos: no es una auditoría ni certifica nada.
 
-Creado por Jorge Rebate Serrano · Licencia CC BY 4.0.
+Creado por Jorge Rebate Serrano.
+
+## Licencia
+
+© 2026 Jorge Rebate Serrano. Todos los derechos reservados. Puedes insertar la herramienta publicada en tu web citando la autoría y sin cobrar por ella; no se permite copiar, modificar ni usar el código con fines comerciales. Detalles en [LICENSE.md](LICENSE.md).
