@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Revisor de web local</title>
+<meta name="description" content="Pega la web de un negocio local y obtén una ficha de una página: cómo se ve en el móvil, cuánto tarda, si se puede llamar con un toque y si se lee bien. Una herramienta de CentaurUX.">
+<link rel="icon" href="assets/centaurux-iso-negro.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..900&family=Inter+Tight:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@500;600&display=swap">
+<link rel="stylesheet" href="centaurux-base.css">
+<style>
+/* Layout: cabecera carbón; portada a la izquierda; formulario en tarjeta; ficha en dos columnas (captura del móvil + bloques); Pro en carbón. */
+[hidden] { display: none !important; }
+.skip { position: absolute; left: -9999px; }
+.skip:focus { left: 16px; top: 16px; background: var(--cz-card); color: var(--cz-fg); padding: 8px 12px; z-index: 60; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--cz-ink); }
+
+main.cz-wrap { display: grid; gap: 44px; padding-block: 48px 64px; }
+.hero { display: grid; gap: 16px; }
+.hero .cz-display-xl { max-width: 18ch; }
+.hero .cz-lead { max-width: 70ch; }
+h2.cz-section-title { margin: 0; }
+
+.panel { background: var(--cz-card); border: 1px solid var(--cz-border); border-radius: var(--cz-radius); padding: 20px; min-width: 0; display: grid; gap: 14px; }
+.hint { color: var(--cz-muted-fg); font-size: .9rem; }
+label.lbl { font-weight: 600; font-size: .95rem; }
+.url-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+input[type="url"], input[type="text"] {
+  font: 400 1rem/1.4 var(--cz-font-sans); color: var(--cz-fg); background: var(--cz-bg);
+  border: 1px solid var(--cz-input); border-radius: 999px; padding: 10px 16px; flex: 1 1 280px; min-width: 0;
+}
+input:focus { border-color: var(--cz-fg); }
+.url-row .cz-btn { padding: 0.7rem 1.2rem; font-size: .9rem; }
+.examples { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: .92rem; }
+details.key { font-size: .92rem; }
+details.key summary { cursor: pointer; color: var(--cz-muted-fg); }
+details.key .key-in { display: grid; gap: 8px; margin-top: 10px; }
+.status { min-height: 1.5em; font-size: .95rem; display: flex; gap: 10px; align-items: center; }
+.status .cz-dot { flex: none; }
+.err { border-left: 3px solid var(--cz-destructive); padding: 10px 14px; background: var(--cz-card); }
+
+/* ---------- Ficha ---------- */
+.ficha { display: grid; gap: 20px; scroll-margin-top: 84px; }
+.ficha-head { display: grid; gap: 8px; }
+.ficha-head .url { font-family: var(--cz-font-mono); font-size: .9rem; overflow-wrap: anywhere; }
+.ficha-grid { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 760px) { .ficha-grid { grid-template-columns: minmax(0, 1fr); } }
+.phone { border: 1px solid var(--cz-fg); border-radius: 22px; padding: 10px 8px; background: var(--cz-card); max-width: 230px; }
+.phone img { display: block; width: 100%; border-radius: 12px; border: 1px solid var(--cz-rule); }
+.phone figcaption { font-size: .8rem; color: var(--cz-muted-fg); margin-top: 8px; text-align: left; }
+.phone .noshot { font-size: .85rem; color: var(--cz-muted-fg); padding: 20px 8px; }
+
+.resumen { display: grid; gap: 6px; border-top: 1px solid var(--cz-rule); border-bottom: 1px solid var(--cz-rule); padding-block: 14px; }
+.resumen .cz-display-md { margin: 0; }
+.bloques { display: grid; gap: 14px; }
+.bloque { background: var(--cz-card); border: 1px solid var(--cz-rule); border-radius: var(--cz-radius); padding: 16px 18px; display: grid; gap: 8px; }
+.bloque-head { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; justify-content: space-between; }
+.bloque h3 { font-family: var(--cz-font-display); font-weight: 600; font-stretch: 92%; font-size: 1.2rem; }
+.verdict { display: inline-flex; align-items: center; gap: 8px; font-family: var(--cz-font-mono); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; }
+.verdict .dot { width: 9px; height: 9px; border-radius: 999px; background: var(--cz-fg); flex: none; }
+.v-revisar .dot { background: var(--cz-destructive); }
+.v-mejorable .dot { background: var(--cz-violet); }
+.v-bien .dot { background: transparent; border: 2px solid var(--cz-fg); }
+.v-pendiente .dot { background: transparent; border: 2px dashed var(--cz-muted-fg); }
+.bloque ul { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; }
+.bloque .tip { font-size: .92rem; color: var(--cz-muted-fg); }
+.metricas { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.metricas div { display: grid; }
+.metricas .n { font-family: var(--cz-font-mono); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.metricas small { font-size: .8rem; color: var(--cz-muted-fg); }
+.linkbtn { font: inherit; color: var(--cz-fg); background: none; border: 0; padding: 0; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.manual { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.manual .cz-btn[aria-pressed="true"] { background: var(--cz-primary); color: var(--cz-on-primary); border-color: var(--cz-primary); }
+
+.acciones { display: grid; gap: 12px; }
+.acciones .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.thanks { font-size: .92rem; border-left: 3px solid var(--cz-fg); padding: 6px 12px; }
+.share-out { width: 100%; }
+.ficha-legal { font-size: .82rem; color: var(--cz-muted-fg); }
+
+/* ---------- Pro ---------- */
+.pro { border-radius: var(--cz-radius); padding: 28px 24px; display: grid; gap: 16px; }
+.pro ul { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; max-width: 70ch; }
+.pro-ask { font-weight: 600; }
+.pro-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.pro-contact { font-size: .94rem; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.pro-contact .addr { font-family: var(--cz-font-mono); font-size: .88em; }
+.pro .cz-btn:not(.cz-btn--outline) { background: var(--cz-lime); color: var(--cz-on-lime); }
+.pro .cz-btn:not(.cz-btn--outline):hover { background: var(--cz-fg); color: var(--cz-bg); }
+
+.como { display: grid; gap: 14px; }
+.como ol { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 75ch; }
+.notes { display: grid; gap: 10px; font-size: .9rem; color: var(--cz-muted-fg); max-width: 80ch; }
+.notes a { color: var(--cz-fg); }
+
+@media (max-width: 560px) { .cz-header__tag { display: none; } }
+
+/* ---------- Impresión: solo la ficha ---------- */
+@media print {
+  @page { margin: 14mm; }
+  body::before, .cz-header, .hero, #formPanel, .acciones, .pro, .como, .notes, .cz-footer, .skip { display: none !important; }
+  main.cz-wrap { padding: 0; gap: 0; max-width: none; }
+  .bloque, .phone { break-inside: avoid; }
+  .ficha-grid { grid-template-columns: 180px minmax(0, 1fr); }
+  .manual { display: none; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#url">Saltar al formulario</a>
+<header class="cz-header cz-dark">
+  <div class="cz-wrap cz-header__inner">
+    <a class="cz-wordmark" href="https://centaurux.es" target="_blank" rel="noopener" data-track="web-ir-centaurux" aria-label="CentaurUX, ir a la web"><img src="assets/centaurux-iso-blanco.png" alt="" width="28" height="28"><span>CentaurUX</span></a>
+    <span class="cz-header__tag">Research, redesigned.</span>
+    <div class="cz-header__actions"><span class="cz-badge cz-badge--ghost">Revisor de web local</span></div>
+  </div>
+</header>
+
+<main class="cz-wrap">
+  <section class="hero" aria-labelledby="h1">
+    <p class="cz-label">Herramienta gratuita · Revisor de web local</p>
+    <h1 class="cz-display-xl" id="h1">La web de un negocio local, <span class="cz-marker">revisada en un minuto</span></h1>
+    <p class="cz-lead">Pega la web de un bar, una clínica o un taller. Te damos una ficha de una página con lo que más le importa a quien la abre desde el móvil: si se ve bien, cuánto tarda, si se puede llamar con un toque y si se lee sin esfuerzo. Ideal para enseñársela al negocio o preparar una propuesta.</p>
+  </section>
+
+  <section class="panel" id="formPanel" aria-labelledby="formTitle">
+    <h2 id="formTitle" class="cz-section-title">Revisar una web</h2>
+    <form id="form" novalidate>
+      <div style="display:grid;gap:10px">
+        <label class="lbl" for="url">Dirección de la web</label>
+        <div class="url-row">
+          <input type="url" id="url" name="url" inputmode="url" autocomplete="url" placeholder="https://www.ejemplo.es" aria-describedby="urlHint" required>
+          <button type="submit" class="cz-btn" id="go">Revisar web <span class="cz-arrow" aria-hidden="true">→</span></button>
+        </div>
+        <p class="hint" id="urlHint">Solo webs públicas. Tarda entre 20 y 60 segundos, porque Google abre la página en un móvil simulado.</p>
+      </div>
+    </form>
+    <div class="examples"><span>¿Sin web a mano? Prueba con</span><button type="button" class="cz-btn cz-btn--outline" data-ex="https://www.wikipedia.org/">wikipedia.org</button></div>
+    <details class="key" id="keyBox">
+      <summary>¿Te sale que se ha llegado al límite? Usa tu propia clave de Google</summary>
+      <div class="key-in">
+        <p class="hint">Si revisas muchas webs, puedes crear una clave gratuita de la API de PageSpeed Insights en Google Cloud y pegarla aquí. Se guarda solo en este navegador.</p>
+        <label class="lbl" for="key">Tu clave de la API (opcional)</label>
+        <input type="text" id="key" autocomplete="off" spellcheck="false" placeholder="AIza…">
+      </div>
+    </details>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+    <div class="err" id="err" role="alert" hidden></div>
+  </section>
+
+  <section class="ficha" id="ficha" aria-labelledby="fichaTitle" hidden tabindex="-1">
+    <div class="ficha-head">
+      <h2 id="fichaTitle" class="cz-section-title">Ficha de la web</h2>
+      <p class="url" id="fUrl"></p>
+      <p class="hint" id="fFecha"></p>
+    </div>
+    <div class="ficha-grid">
+      <figure class="phone" id="fPhone" style="margin:0"></figure>
+      <div style="display:grid;gap:16px;min-width:0">
+        <div class="resumen" id="fResumen"></div>
+        <div class="bloques" id="fBloques"></div>
+      </div>
+    </div>
+    <p class="ficha-legal">Ficha orientativa hecha con Google PageSpeed Insights (Lighthouse) en un móvil simulado con conexión lenta. No es una auditoría completa ni certifica nada, y los resultados pueden cambiar de una revisión a otra. Hecha con el Revisor de web local de CentaurUX.</p>
+
+    <div class="acciones">
+      <div class="row">
+        <button type="button" class="cz-btn" id="print">Imprimir o guardar en PDF</button>
+        <button type="button" class="cz-btn cz-btn--outline" id="copy">Copiar resumen para enviar</button>
+        <button type="button" class="cz-btn cz-btn--outline" id="share">Copiar enlace a esta revisión</button>
+      </div>
+      <input class="share-out" id="shareOut" type="text" readonly aria-label="Enlace o resumen para copiar" hidden>
+      <div class="row">
+        <button type="button" class="cz-btn cz-btn--outline" id="proLogo">PDF con tu logo · Pro</button>
+        <button type="button" class="cz-btn cz-btn--outline" id="proVarias">Revisar varias webs a la vez · Pro</button>
+      </div>
+      <div class="thanks" id="proMiniThanks" hidden role="status">Todavía no está disponible. Gracias por pulsar: nos ayuda a decidir si lo construimos. Abajo te contamos qué traerá.</div>
+    </div>
+  </section>
+
+  <section class="pro cz-dark" id="pro" aria-labelledby="proTitle">
+    <p class="cz-section-title"><span>Próximamente</span></p>
+    <h2 id="proTitle" class="cz-display-md">Revisor Pro para freelances y agencias</h2>
+    <p class="pro-ask">¿Pagarías una cantidad simbólica por estas mejoras?</p>
+    <ul>
+      <li>Informe en PDF con tu logo y tus datos de contacto, listo para mandar al negocio.</li>
+      <li>Revisar varias webs a la vez (por ejemplo, todos los dentistas de tu barrio) y compararlas en una tabla.</li>
+      <li>Un texto de propuesta en lenguaje sencillo para acompañar la ficha.</li>
+    </ul>
+    <div class="pro-actions">
+      <button type="button" class="cz-btn" id="proBtn">Me interesa <span class="cz-arrow" aria-hidden="true">→</span></button>
+      <a class="cz-btn cz-btn--outline" href="https://ko-fi.com/jrebate" target="_blank" rel="noopener" data-track="web-kofi-pro">Apóyalo ya en Ko-fi</a>
+    </div>
+    <div class="thanks" id="proThanks" hidden role="status">Gracias, lo tendremos en cuenta. Mientras tanto, la ficha es gratis.</div>
+    <p class="pro-contact">¿Te interesa mucho o echas algo en falta? Escríbeme, soy Jorge: <span class="addr">jrebateserrano@gmail.com</span> <button type="button" class="cz-creditos__copy" data-cz-copy="jrebateserrano@gmail.com" data-track="web-contacto-email">Copiar correo</button></p>
+  </section>
+
+  <section class="como" aria-labelledby="comoTitle">
+    <h2 id="comoTitle" class="cz-section-title">Qué miramos</h2>
+    <ol>
+      <li>Vista en móvil: si la web se adapta a la pantalla y si los botones tienen tamaño para el dedo.</li>
+      <li>Velocidad: cuánto tarda en verse lo principal, si la página da saltos al cargar y si responde rápido.</li>
+      <li>Botón de llamar: si hay un teléfono o un WhatsApp que se pueda pulsar. Si la web no nos deja leerla, te pedimos que lo mires tú en la captura.</li>
+      <li>Legibilidad: si el texto tiene tamaño suficiente en el móvil y contraste con el fondo.</li>
+      <li>Lo que ve Google: conexión segura, título, descripción y textos alternativos en las imágenes.</li>
+    </ol>
+  </section>
+
+  <section class="notes" aria-label="Notas">
+    <p>Los resultados son orientativos y salen de las pruebas automáticas de Google PageSpeed Insights. Una revisión automática no sustituye la opinión de una persona experta ni sirve para certificar nada.</p>
+    <p><strong>Privacidad:</strong> la dirección que escribes se envía a la API de Google PageSpeed Insights para analizarla, según las <a href="https://developers.google.com/terms" target="_blank" rel="noopener">condiciones de Google</a>. Nosotros no guardamos las webs que revisas. Contamos visitas y clics con <a href="https://www.goatcounter.com/" target="_blank" rel="noopener">GoatCounter</a>, que no usa cookies ni guarda datos personales.</p>
+    <p>Otras herramientas gratuitas: <a href="https://jrebate.github.io/auditor_paleta/" target="_blank" rel="noopener" data-track="web-ir-auditor">Auditor de paleta</a>, <a href="https://jrebate.github.io/lenguaje_claro/" target="_blank" rel="noopener" data-track="web-ir-legible">Legible</a> y <a href="https://jrebate.github.io/declarador_accesibilidad/" target="_blank" rel="noopener" data-track="web-ir-declarador">Declarador de accesibilidad</a>. ¿Te resulta útil? Puedes <a href="https://ko-fi.com/jrebate" target="_blank" rel="noopener" data-track="web-kofi-pie">invitarnos a un café en Ko-fi</a>.</p>
+  </section>
+</main>
+
+<footer class="cz-footer">
+  <div class="cz-wrap cz-footer__inner">
+    <span class="cz-label">Human + AI = Centaur</span>
+    <a class="cz-wordmark" href="https://centaurux.es" target="_blank" rel="noopener" data-track="web-ir-centaurux-pie">
+      <img class="cz-logo--light-bg" src="assets/centaurux-iso-negro.png" alt="" width="24" height="24">
+      <img class="cz-logo--dark-bg" src="assets/centaurux-iso-blanco.png" alt="" width="24" height="24">
+      <span class="cz-label" style="color:var(--cz-fg)">CentaurUX</span>
+    </a>
+    <div class="cz-footer__creditos">
+    <div class="cz-creditos">
+      <p class="cz-creditos__cta"><img class="cz-logo--light-bg" src="assets/centaurux-iso-negro.png" alt="" width="22" height="22"><img class="cz-logo--dark-bg" src="assets/centaurux-iso-blanco.png" alt="" width="22" height="22"><span>Ponte al día con la IA en UX, a tu ritmo y sin FOMO, en <a href="https://www.shiftr.pro/" target="_blank" rel="noopener">Shift+R</a> y <a href="https://centaurux.es" target="_blank" rel="noopener">CentaurUX</a></span></p>
+      <p>Creado por <b>Jorge Rebate Serrano</b> · Licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>: puedes usarlo y adaptarlo citando la autoría.</p>
+      <p class="cz-creditos__mail">Correo: <span class="cz-creditos__addr">jrebateserrano@gmail.com</span> <button type="button" class="cz-creditos__copy" data-cz-copy="jrebateserrano@gmail.com">Copiar correo</button></p>
+      <p>LinkedIn: <a href="https://www.linkedin.com/in/jrebateserrano/" target="_blank" rel="noopener">Jorge Rebate Serrano</a></p>
+    </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  // Clave de la API de PageSpeed Insights: la mete la Action de Pages desde el secreto PSI_KEY. Está limitada a jrebate.github.io en Google Cloud.
+  var PSI_KEY = "";
+  var KEY_STORE = "revisor-web-clave";
+  var PSI = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
+
+  var $ = function (id) { return document.getElementById(id); };
+  var state = { url: "", lh: null, verdicts: {}, llamar: null, running: false };
+
+  function track(name, title) {
+    try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: name, title: title || name, event: true }); } catch (e) {}
+  }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function num(n, d) { return n.toLocaleString("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d }); }
+  function secs(ms) { return num(ms / 1000, 1) + " s"; }
+
+  function normalize(raw) {
+    var s = (raw || "").trim();
+    if (!s) return null;
+    if (!/^https?:\/\//i.test(s)) s = "https://" + s;
+    try {
+      var u = new URL(s);
+      if (!/\./.test(u.hostname) || /^(localhost|127\.|10\.|192\.168\.)/.test(u.hostname)) return null;
+      return u.href;
+    } catch (e) { return null; }
+  }
+
+  // ---------- Clave propia ----------
+  var keyIn = $("key");
+  try { keyIn.value = localStorage.getItem(KEY_STORE) || ""; } catch (e) {}
+  keyIn.addEventListener("change", function () {
+    var v = keyIn.value.trim();
+    try { if (v) localStorage.setItem(KEY_STORE, v); else localStorage.removeItem(KEY_STORE); } catch (e) {}
+    if (v) track("web-clave-propia", "Usa su propia clave");
+  });
+
+  // ---------- Progreso ----------
+  var STEPS = ["Google está abriendo la web en un móvil simulado…", "Midiendo cuánto tarda en cargar…", "Comprobando tamaños de texto y botones…", "Preparando la ficha…"];
+  var stepTimer = null;
+  function setStatus(text, busy) {
+    $("status").innerHTML = text ? (busy ? '<span class="cz-dot cz-dot--pulse" aria-hidden="true"></span>' : "") + "<span>" + esc(text) + "</span>" : "";
+  }
+  function startSteps() {
+    var i = 0; setStatus(STEPS[0], true);
+    stepTimer = setInterval(function () { i = Math.min(i + 1, STEPS.length - 1); setStatus(STEPS[i], true); }, 9000);
+  }
+  function stopSteps() { clearInterval(stepTimer); stepTimer = null; }
+
+  function showError(html) { var e = $("err"); e.innerHTML = html; e.hidden = false; }
+
+  // ---------- Llamada a PageSpeed ----------
+  function runPsi(url) {
+    var p = new URLSearchParams();
+    p.set("url", url); p.set("strategy", "mobile"); p.set("locale", "es");
+    ["performance", "accessibility", "seo", "best-practices"].forEach(function (c) { p.append("category", c); });
+    var own = keyIn.value.trim(), key = own || PSI_KEY;
+    if (key) p.set("key", key);
+    var ctrl = window.AbortController ? new AbortController() : null;
+    var t = setTimeout(function () { if (ctrl) ctrl.abort(); }, 120000);
+    return fetch(PSI + "?" + p.toString(), ctrl ? { signal: ctrl.signal } : {}).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) { clearTimeout(t); return { status: r.status, json: j }; });
+    }, function (err) { clearTimeout(t); throw err; });
+  }
+
+  // Intento de leer el HTML para buscar enlaces de llamar. Casi todas las webs lo bloquean (CORS): entonces se pide revisión manual.
+  function tryReadHtml(url) {
+    var ctrl = window.AbortController ? new AbortController() : null;
+    var t = setTimeout(function () { if (ctrl) ctrl.abort(); }, 8000);
+    return fetch(url, { mode: "cors", credentials: "omit", redirect: "follow", signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) { clearTimeout(t); return r.ok ? r.text() : null; })
+      .catch(function () { clearTimeout(t); return null; });
+  }
+  function visibleLen(html) { return html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().length; }
+  function findCall(html) {
+    var tel = (html.match(/href\s*=\s*["']\s*tel:/gi) || []).length;
+    var wa = (html.match(/href\s*=\s*["'][^"']*(wa\.me\/|api\.whatsapp\.com|whatsapp:\/\/)/gi) || []).length;
+    var text = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ");
+    var phone = /(\+34[\s.-]?)?\b[6789]\d{2}[\s.-]?\d{2,3}[\s.-]?\d{2,3}[\s.-]?\d{0,3}\b/.test(text);
+    return { tel: tel, wa: wa, phone: phone };
+  }
+
+  // ---------- Análisis ----------
+  function A(id) { return (state.lh && state.lh.audits && state.lh.audits[id]) || null; }
+  function passed(a) { return a && a.score !== null && a.score !== undefined && a.score >= 0.9; }
+  function failed(a) { return a && a.score !== null && a.score !== undefined && a.score < 0.9 && a.scoreDisplayMode !== "notApplicable" && a.scoreDisplayMode !== "informative"; }
+  function items(a) { return (a && a.details && a.details.items) ? a.details.items.length : 0; }
+
+  var LABEL = { bien: "Bien", mejorable: "Mejorable", revisar: "Revisar", pendiente: "Míralo tú" };
+
+  function bloqueHtml(id, title, verdict, bodyHtml) {
+    state.verdicts[id] = verdict;
+    return '<article class="bloque" id="b-' + id + '"><div class="bloque-head"><h3>' + esc(title) + '</h3>' +
+      '<span class="verdict v-' + verdict + '"><span class="dot" aria-hidden="true"></span>' + LABEL[verdict] + '</span></div>' + bodyHtml + "</article>";
+  }
+
+  function movil() {
+    var vp = A("viewport"), tg = A("target-size"), v = "bien", li = [];
+    if (failed(vp)) { v = "revisar"; li.push("No está preparada para móvil: el teléfono la enseña como en un ordenador, en pequeño, y hay que hacer zoom."); }
+    else if (vp) li.push("Se adapta al ancho de la pantalla del móvil.");
+    if (failed(tg)) { if (v === "bien") v = "mejorable"; var n = items(tg); li.push("Hay " + (n ? n + " " : "") + "botones o enlaces pequeños o muy juntos para pulsarlos con el dedo."); }
+    else if (passed(tg)) li.push("Los botones y enlaces tienen tamaño para el dedo.");
+    var tip = !failed(tg) ? "" : '<p class="tip">En móvil, cada botón debería medir al menos el ancho de un dedo (unos 48 píxeles) y no estar pegado a otro.</p>';
+    return { v: v, html: bloqueHtml("movil", "Vista en móvil", v, "<ul><li>" + li.map(esc).join("</li><li>") + "</li></ul>" + tip), first: v !== "bien" ? li[0] : "" };
+  }
+
+  function velocidad() {
+    var lcp = A("largest-contentful-paint"), cls = A("cumulative-layout-shift"), tbt = A("total-blocking-time");
+    var perf = state.lh.categories && state.lh.categories.performance ? state.lh.categories.performance.score : null;
+    var v = "bien", li = [], mets = [];
+    function worse(x) { var o = { bien: 0, mejorable: 1, revisar: 2 }; if (o[x] > o[v]) v = x; }
+    if (lcp && typeof lcp.numericValue === "number") {
+      var l = lcp.numericValue; mets.push(["Lo principal se ve en", secs(l)]);
+      if (l > 4000) { worse("revisar"); li.push("Lo principal tarda " + secs(l) + " en verse. Mucha gente se va antes de los 3 segundos."); }
+      else if (l > 2500) { worse("mejorable"); li.push("Lo principal tarda " + secs(l) + " en verse. Lo ideal es menos de 2,5 s."); }
+      else li.push("Lo principal se ve en " + secs(l) + ", un buen tiempo para móvil.");
+    }
+    if (cls && typeof cls.numericValue === "number") {
+      var c = cls.numericValue; mets.push(["Saltos al cargar", num(c, 2)]);
+      if (c > 0.25) { worse("revisar"); li.push("La página da saltos mientras carga: es fácil pulsar donde no querías."); }
+      else if (c > 0.1) { worse("mejorable"); li.push("La página se mueve un poco mientras carga."); }
+    }
+    if (tbt && typeof tbt.numericValue === "number") {
+      var b = tbt.numericValue; mets.push(["Bloqueo al tocar", num(b, 0) + " ms"]);
+      if (b > 600) { worse("revisar"); li.push("Tarda en responder cuando la tocas, por el código que carga."); }
+      else if (b > 200) { worse("mejorable"); li.push("A veces tarda un poco en responder al tocarla."); }
+    }
+    if (perf !== null) mets.push(["Nota de Google", Math.round(perf * 100) + "/100"]);
+    var field = state.field, fieldHtml = "";
+    if (field) fieldHtml = '<p class="tip">Con visitas reales de Chrome en los últimos 28 días, lo principal se ve en ' + secs(field) + " para la mayoría de la gente.</p>";
+    var opp = oportunidades();
+    var oppHtml = opp.length ? '<p class="tip">Lo que más ayudaría según Google: ' + opp.map(esc).join("; ") + ".</p>" : "";
+    var metHtml = '<div class="metricas">' + mets.map(function (m) { return "<div><small>" + esc(m[0]) + '</small><span class="n">' + esc(m[1]) + "</span></div>"; }).join("") + "</div>";
+    return { v: v, html: bloqueHtml("velocidad", "Velocidad", v, metHtml + "<ul><li>" + li.map(esc).join("</li><li>") + "</li></ul>" + fieldHtml + oppHtml), first: v !== "bien" ? li.filter(function (x) { return !/buen tiempo/.test(x); })[0] : "" };
+  }
+  function oportunidades() {
+    var list = [];
+    Object.keys(state.lh.audits).forEach(function (k) {
+      var a = state.lh.audits[k];
+      var s = a.details && (a.details.overallSavingsMs || 0);
+      var lcpSave = a.metricSavings && a.metricSavings.LCP || 0;
+      var save = Math.max(s || 0, lcpSave);
+      if (a.score !== null && a.score < 0.9 && save >= 300 && a.title) list.push({ t: a.title.replace(/`/g, ""), s: save });
+    });
+    list.sort(function (x, y) { return y.s - x.s; });
+    var seen = {};
+    return list.filter(function (x) { if (seen[x.t]) return false; seen[x.t] = 1; return true; }).slice(0, 3).map(function (x) { return x.t.charAt(0).toLowerCase() + x.t.slice(1) + " (ahorro de unos " + secs(x.s) + ")"; });
+  }
+
+  function llamar() {
+    var r = state.llamar, v, body;
+    if (r && r.auto) {
+      if (r.tel || r.wa) {
+        v = "bien";
+        var parts = []; if (r.tel) parts.push(r.tel + (r.tel === 1 ? " enlace de teléfono" : " enlaces de teléfono")); if (r.wa) parts.push(r.wa + (r.wa === 1 ? " enlace de WhatsApp" : " enlaces de WhatsApp"));
+        body = "<ul><li>Hemos encontrado " + esc(parts.join(" y ")) + ((r.tel + r.wa) === 1 ? " que se puede pulsar" : " que se pueden pulsar") + ".</li></ul><p class=\"tip\">Comprueba en la captura que se ve sin tener que bajar.</p>";
+      } else if (r.phone) {
+        v = "mejorable"; body = "<ul><li>Hay un número de teléfono escrito, pero no se puede pulsar para llamar.</li></ul><p class=\"tip\">Basta con convertirlo en un enlace <code>tel:</code> para que se llame con un toque.</p>";
+      } else {
+        v = "revisar"; body = "<ul><li>No hemos encontrado ningún teléfono ni WhatsApp en la portada.</li></ul><p class=\"tip\">Para un negocio local, llamar es muchas veces lo que busca quien entra desde el móvil. Si en la captura sí ves un botón de llamar, <button type=\"button\" class=\"linkbtn\" data-call=\"si\">márcalo aquí</button>.</p>";
+      }
+      return { v: v, html: bloqueHtml("llamar", "Botón de llamar", v, body), first: v !== "bien" ? (v === "revisar" ? "No hay un teléfono ni un WhatsApp que se pueda pulsar." : "El teléfono está escrito pero no se puede pulsar.") : "" };
+    }
+    var ans = r && r.manual;
+    v = ans === "si" ? "bien" : ans === "no" ? "revisar" : "pendiente";
+    var q = ans ? (ans === "si" ? "<ul><li>Has visto un botón o enlace para llamar en la captura.</li></ul>" : "<ul><li>No se ve un botón para llamar en la primera pantalla del móvil.</li></ul><p class=\"tip\">Un botón de llamar a la vista suele ser lo primero que busca quien entra desde el móvil.</p>") :
+      "<p>Esta web no deja que la leamos desde tu navegador, así que necesitamos tu vistazo. Mira la captura: ¿se ve un botón o enlace para llamar o escribir por WhatsApp sin bajar?</p>";
+    body = q + '<div class="manual" role="group" aria-label="¿Se ve un botón de llamar?"><button type="button" class="cz-btn cz-btn--outline" data-call="si" aria-pressed="' + (ans === "si") + '">Sí, se ve</button><button type="button" class="cz-btn cz-btn--outline" data-call="no" aria-pressed="' + (ans === "no") + '">No lo veo</button></div>';
+    return { v: v, html: bloqueHtml("llamar", "Botón de llamar", v, body), first: v === "revisar" ? "No se ve un botón para llamar en la primera pantalla." : "" };
+  }
+
+  function legibilidad() {
+    var fs = A("font-size"), cc = A("color-contrast"), v = "bien", li = [];
+    if (failed(fs)) { v = "revisar"; li.push("Hay bastante texto demasiado pequeño para leerlo en el móvil sin hacer zoom."); }
+    else if (passed(fs)) li.push("El tamaño del texto se lee bien en el móvil.");
+    if (failed(cc)) { if (v === "bien") v = "mejorable"; var n = items(cc); li.push("Hay " + (n ? n + " " : "") + "textos con poco contraste con el fondo, que cuestan de leer al sol o con la vista cansada."); }
+    else if (passed(cc)) li.push("El texto destaca bien sobre el fondo.");
+    if (!li.length) li.push("No hemos podido medir la legibilidad en esta web.");
+    return { v: v, html: bloqueHtml("legibilidad", "Legibilidad", v, "<ul><li>" + li.map(esc).join("</li><li>") + "</li></ul>"), first: v !== "bien" ? li.filter(function (x) { return /pequeño|poco contraste/.test(x); })[0] : "" };
+  }
+
+  function google() {
+    var checks = [
+      ["is-on-https", "Usa conexión segura (https).", "No usa conexión segura: algunos navegadores avisan de que el sitio no es seguro.", 2],
+      ["document-title", "Tiene un título para la pestaña y para Google.", "No tiene título: Google no sabe bien cómo llamarla.", 1],
+      ["meta-description", "Tiene una descripción para los resultados de Google.", "No tiene descripción: Google se inventa el texto que sale bajo el enlace.", 1],
+      ["image-alt", "Las imágenes tienen texto alternativo.", "Hay imágenes sin texto alternativo: ni Google ni los lectores de pantalla saben qué muestran.", 1],
+      ["html-has-lang", "Indica el idioma de la página.", "No indica el idioma de la página.", 1]
+    ];
+    var v = "bien", li = [], first = "";
+    checks.forEach(function (c) {
+      var a = A(c[0]); if (!a || a.score === null || a.scoreDisplayMode === "notApplicable") return;
+      if (a.score >= 0.9) li.push(c[1]);
+      else { li.unshift(c[2]); if (!first) first = c[2]; if (c[3] === 2) v = "revisar"; else if (v === "bien") v = "mejorable"; }
+    });
+    return { v: v, html: bloqueHtml("google", "Lo que ve Google", v, "<ul><li>" + li.map(esc).join("</li><li>") + "</li></ul>"), first: first };
+  }
+
+  function render() {
+    state.verdicts = {};
+    var parts = [movil(), velocidad(), llamar(), legibilidad(), google()];
+    $("fBloques").innerHTML = parts.map(function (p) { return p.html; }).join("");
+    var rev = parts.filter(function (p) { return p.v === "revisar"; }).length;
+    var mej = parts.filter(function (p) { return p.v === "mejorable"; }).length;
+    var head;
+    if (!rev && !mej) head = "Buena base: no hemos visto problemas claros en lo que miramos";
+    else head = [rev ? rev + (rev === 1 ? " punto para revisar" : " puntos para revisar") : "", mej ? mej + (mej === 1 ? " mejorable" : " mejorables") : ""].filter(Boolean).join(" y ");
+    var firstFix = (parts.filter(function (p) { return p.v === "revisar" && p.first; })[0] || parts.filter(function (p) { return p.v === "mejorable" && p.first; })[0] || {}).first;
+    $("fResumen").innerHTML = '<p class="cz-label">Resumen</p><p class="cz-display-md">' + esc(head.charAt(0).toUpperCase() + head.slice(1)) + "</p>" +
+      (firstFix ? "<p><strong>Lo primero que arreglaría:</strong> " + esc(firstFix) + "</p>" : "");
+    state.parts = parts; state.head = head; state.firstFix = firstFix;
+    document.querySelectorAll("[data-call]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        state.llamar = { manual: b.dataset.call };
+        track("web-llamar-" + b.dataset.call, "Botón de llamar (manual): " + b.textContent);
+        render();
+        var nb = document.querySelector('[data-call="' + b.dataset.call + '"]'); if (nb) nb.focus();
+      });
+    });
+  }
+
+  function renderShot() {
+    var fs = A("final-screenshot"), fig = $("fPhone");
+    var src = fs && fs.details && fs.details.data;
+    fig.innerHTML = src ? '<img src="' + esc(src) + '" alt="Captura de la primera pantalla de la web en un móvil"><figcaption>Así se ve al abrirla en un móvil.</figcaption>' : '<p class="noshot">Google no ha devuelto captura de esta web.</p>';
+  }
+
+  function analyze(url) {
+    if (state.running) return;
+    state.running = true; $("go").disabled = true;
+    $("err").hidden = true; $("ficha").hidden = true; $("shareOut").hidden = true; $("proMiniThanks").hidden = true;
+    state.url = url; state.llamar = null; state.field = null;
+    track("web-revisar", "Revisar web");
+    startSteps();
+    var htmlP = tryReadHtml(url);
+    runPsi(url).then(function (res) {
+      if (res.status === 200 && res.json.lighthouseResult) {
+        state.lh = res.json.lighthouseResult;
+        var le = res.json.loadingExperience;
+        if (le && le.metrics && le.metrics.LARGEST_CONTENTFUL_PAINT_MS && le.id && le.origin_fallback !== true) state.field = le.metrics.LARGEST_CONTENTFUL_PAINT_MS.percentile;
+        return htmlP.then(function (html) {
+          if (html && visibleLen(html) > 200) { var f = findCall(html); state.llamar = { auto: true, tel: f.tel, wa: f.wa, phone: f.phone }; track("web-llamar-auto", "Botón de llamar leído automáticamente"); }
+          stopSteps(); setStatus("");
+          var finalUrl = state.lh.finalDisplayedUrl || state.lh.finalUrl || url;
+          $("fUrl").textContent = finalUrl;
+          $("fFecha").textContent = "Revisada el " + new Date().toLocaleString("es-ES", { dateStyle: "long", timeStyle: "short" }) + " · Vista de móvil";
+          renderShot(); render();
+          $("ficha").hidden = false; $("ficha").focus({ preventScroll: true }); $("ficha").scrollIntoView({ behavior: "smooth", block: "start" });
+          track("web-resultado", "Ficha generada");
+          try { history.replaceState(null, "", "#url=" + encodeURIComponent(url)); } catch (e) {}
+        });
+      }
+      stopSteps(); setStatus("");
+      var msg = (res.json && res.json.error && res.json.error.message) || "";
+      if (res.status === 429) {
+        track("web-error-cuota", "Error: cuota agotada");
+        $("keyBox").open = true;
+        showError("<p><strong>Hoy se han agotado las revisiones gratuitas.</strong> Vuelve a probar más tarde o usa tu propia clave de Google (es gratis), en la opción de arriba.</p>");
+      } else if (res.status === 403 || /API key/i.test(msg)) {
+        track("web-error-clave", "Error: clave");
+        showError("<p><strong>Google no ha aceptado la clave de la API.</strong> Si has puesto una tuya, revisa que esté bien copiada y que tenga activada la API de PageSpeed Insights.</p>");
+      } else if (/FAILED_DOCUMENT_REQUEST|ERRORED_DOCUMENT_REQUEST|DNS|NO_FCP|unable to reliably load|NOT_HTML/i.test(msg)) {
+        track("web-error-carga", "Error: no se pudo cargar la web");
+        showError("<p><strong>Google no ha podido abrir esa web.</strong> Comprueba que la dirección está bien escrita y que la página se abre en tu navegador. Algunas webs bloquean las visitas automáticas.</p>");
+      } else {
+        track("web-error", "Error: otro");
+        showError("<p><strong>No hemos podido revisar la web.</strong> Vuelve a probar en un momento.</p>" + (msg ? '<p class="hint">Detalle de Google: ' + esc(msg.slice(0, 220)) + "</p>" : ""));
+      }
+    }).catch(function () {
+      stopSteps(); setStatus("");
+      track("web-error-red", "Error: red o tiempo agotado");
+      showError("<p><strong>La revisión ha tardado demasiado o se ha cortado la conexión.</strong> Vuelve a probar; algunas webs muy pesadas tardan más de dos minutos.</p>");
+    }).then(function () { state.running = false; $("go").disabled = false; });
+  }
+
+  $("form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var u = normalize($("url").value);
+    if (!u) { $("err").hidden = true; showError("<p>Escribe una dirección web pública, por ejemplo <code>https://www.ejemplo.es</code>.</p>"); $("url").focus(); return; }
+    $("url").value = u; analyze(u);
+  });
+  document.querySelectorAll("[data-ex]").forEach(function (b) {
+    b.addEventListener("click", function () { $("url").value = b.dataset.ex; track("web-ejemplo", "Probar ejemplo"); analyze(b.dataset.ex); });
+  });
+
+  // ---------- Acciones de la ficha ----------
+  function copyText(text, okMsg) {
+    var out = $("shareOut"); out.value = text; out.hidden = false;
+    function fallback() { out.focus(); out.select(); setStatus("Selecciona y copia el texto de la caja."); }
+    try { navigator.clipboard.writeText(text).then(function () { setStatus(okMsg); }, fallback); } catch (e) { fallback(); }
+  }
+  window.addEventListener("beforeprint", function () { document.documentElement.classList.add("cz-solo-claro"); });
+  window.addEventListener("afterprint", function () { document.documentElement.classList.remove("cz-solo-claro"); });
+  $("print").addEventListener("click", function () { track("web-imprimir", "Imprimir o guardar en PDF"); window.print(); });
+  $("copy").addEventListener("click", function () {
+    track("web-copiar-resumen", "Copiar resumen");
+    var lines = ["Revisión rápida de " + $("fUrl").textContent + " (vista de móvil)", "Resumen: " + state.head + "."];
+    if (state.firstFix) lines.push("Lo primero que arreglaría: " + state.firstFix);
+    lines.push("");
+    document.querySelectorAll("#fBloques .bloque").forEach(function (b) {
+      var t = b.querySelector("h3").textContent, v = b.querySelector(".verdict").textContent;
+      lines.push(t + ": " + v);
+      b.querySelectorAll("li").forEach(function (li) { lines.push("  - " + li.textContent); });
+    });
+    lines.push("", "Hecho con el Revisor de web local de CentaurUX (datos orientativos de Google PageSpeed Insights): " + location.href.split("#")[0]);
+    copyText(lines.join("\n"), "Resumen copiado. Pégalo en un correo o un mensaje.");
+  });
+  $("share").addEventListener("click", function () {
+    track("web-compartir-enlace", "Copiar enlace a la revisión");
+    copyText(location.href.split("#")[0] + "#url=" + encodeURIComponent(state.url), "Enlace copiado. Quien lo abra verá la revisión hecha de nuevo.");
+  });
+  $("proLogo").addEventListener("click", function () { track("web-pro-pdf-logo", "Pro: PDF con tu logo"); $("proMiniThanks").hidden = false; });
+  $("proVarias").addEventListener("click", function () { track("web-pro-varias-webs", "Pro: varias webs a la vez"); $("proMiniThanks").hidden = false; });
+  $("proBtn").addEventListener("click", function () { track("web-pro-me-interesa", "Revisor Pro: me interesa"); $("proThanks").hidden = false; });
+
+  document.querySelectorAll("[data-track]").forEach(function (a) {
+    a.addEventListener("click", function () { track(a.dataset.track, a.textContent.trim()); });
+  });
+  document.querySelectorAll("[data-cz-copy]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var t = b.getAttribute("data-cz-copy"), label = b.textContent;
+      function ok() { b.textContent = "Copiado"; setTimeout(function () { b.textContent = label; }, 1800); }
+      function sel() { var r = document.createRange(); r.selectNodeContents(b.previousElementSibling); var s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Seleccionado"; }
+      try { navigator.clipboard.writeText(t).then(ok, sel); } catch (e) { sel(); }
+    });
+  });
+
+  // Enlace compartido: #url=… lanza la revisión al abrir
+  var m = location.hash.match(/^#url=(.+)$/);
+  if (m) {
+    var u = null; try { u = normalize(decodeURIComponent(m[1])); } catch (e) {}
+    if (u) { $("url").value = u; track("web-abrir-enlace", "Abrir revisión compartida"); analyze(u); }
+  }
+})();
+</script>
+<script data-goatcounter="https://jrebate.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
